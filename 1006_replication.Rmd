@@ -6,6 +6,9 @@ output: bookdown::pdf_document2
 bibliography: bib2.bib
 biblio-style: apalike 
 link_citations: TRUE
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
 ---
 
 
@@ -29,6 +32,7 @@ library(plm)
 library(sandwich)
 library(stargazer)
 library(huxtable)
+library(float)
 library(tidyverse)
 
 ```
@@ -45,7 +49,8 @@ I was able to successfully replicate FPY's findings in this paper exactly. Note 
 
 In my extension, I run four dyadic quasipoisson models using the same (errata) data as the original authors. These models are similarly statistically significant to the original results, and the statistical significance of the rivalry variable is equivalent to the original findings. In fact, my models report a stronger effect of rivalry than the original paper. These results confirm that the authors' original findings are robust.
 
-This paper is laid out as follows: in the section below, I discuss relevant literature as it relates to the concept of interstate rivalries, state-sponsored terrorism, and the use of proxies. I then discuss FPY's research design and analysis and my successful replication of their results. Next, I conduct an extension which validates FPY's findings using dyadic quasipoisson models. Lastly, I discuss my results and the implications for future empirical research in the field of terrorism studies.^[All analysis for this paper is available in my GitHub: https://github.com/LizMas/1006_replication].
+This paper is laid out as follows: in the section below, I discuss relevant literature as it relates to the concept of interstate rivalries, state-sponsored terrorism, and the use of proxies. I then discuss FPY's research design and analysis and my successful replication of their results. Next, I conduct an extension which validates FPY's findings using dyadic quasipoisson models. Lastly, I discuss my results and the implications for future empirical research in the field of terrorism studies.^[All analysis for this paper is available in my GitHub: https://github.com/LizMas/terrorism_rivalries_replication].
+
 
 # Literature Review
 
@@ -59,15 +64,16 @@ FPY were among the first scholars to use dyadic analysis in the field. For their
 
 They use directed dyads, as opposed to nondirected dyads, because they argue that there may be “that certain aspects of the origin country—the country of national origin of the perpetrators of the attack—lead to greater attacks on the target country—the country where the attack occurred. Directed dyads are also appropriate because certain aspects of the target country may make them a more plausible target for actors from the origin country.” They also used only politically relevant dyads, which allows them to discount pairs of states which would not significantly interact in the international system. This keeps the number of observations from being deceivingly high, which would increase the likelihood of spurious statistical significance. 
 
+
 # Replication 
 
-I successfully replicated the results from Findley et al. (2012). The code for this replication can be found in my repo, mentioned above. The relevant tables can be found in the Appendix.  
+I successfully replicated the results from Findley et al. (2012). The code for this replication can be found in my repo, mentioned above. The relevant tables can be found in the Appendix. 
 
 # Extension
 
-FYP ran negative binomial regressions with STATA's cluster function. In R, I chose to use R’s general linear model using a quasipoisson distribution because the dataset contains over-dispersed count data as a result of FPY’s use of dyads. I ran four models, using the same variables that the original authors included in their analysis, and wrapped the models in a clustering function to account for dyadic clustering. The results show that rivalry is highly statistically significant at P < 0.001 across all four models. This matches the FPY’s original findings. The models show a stronger effect of rivalry than the original findings, but all variables in this extension trend slightly higher than the original results. 
-
 ```{r}
+
+# Begin extension 
 
 # data from errata 
 
@@ -161,13 +167,16 @@ set_caption("Quasipoisson Clustered Models of Transnational Terrorist Activity p
 
 ```
 
+FYP ran negative binomial regressions with STATA's cluster function. In R, I chose to use R’s general linear model using a quasipoisson distribution because the dataset contains over-dispersed count data as a result of FPY’s use of dyads. I ran four models, using the same variables that the original authors included in their analysis, and wrapped the models in a clustering function to account for dyadic clustering. The results show that rivalry is highly statistically significant at P < 0.001 across all four models. This matches the FPY’s original findings. The models show a stronger effect of rivalry than the original findings, but all variables in this extension trend slightly higher than the original results.
+
+
 ```{r}
 
-tab_final
+tab_final 
 
 ```
 
-
+\newpage
 
 # Critique 
 
@@ -180,6 +189,7 @@ FPY define their thought process of using directed dyads thusly: “First, we de
 Conrad (2016) argued this point exactly, saying “even knowing the nationality of the terrorists themselves does not help, since many state-sponsored terrorists are of a different nationality than their state sponsors. For example, knowing that a Lebanese Hizbollah agent pulled off an attack in Israel masks the possibility that the agent may have been sponsored by Iran. In such a case, knowing the nationality of the terrorist (Lebanese) is not useful.” 
 
 Because of the problems with dyadic design, some scholars have called for the practice to be abandoned entirely [@cranmer2016critique] while others advise to proceed with extreme caution [@poast2016dyads]. Abandoning dyadic design in favor of an alternative (perhaps country-year) is beyond the scope of this paper and would have involved recoding most variables entirely. This is an interesting opportunity for future scholarship. 
+
 
 # Conclusion 
 
@@ -194,24 +204,23 @@ read.bibtex(file = "bib2.bib")
 ```
 # Appendix 
 
-Appendix A: Original Table^[All analysis for this paper is available in my GitHub: https://github.com/LizMas/1006_replication/tree/master/stata]. 
+Appendix A: Table 1 Replication
 ```{r, warning = FALSE, echo = FALSE, error = FALSE, message = FALSE}
 
-# This is the orignal fpy table: 
+# Replication Table 1 
 
-img <- magick::image_read('og_table_main.png')
+img <- magick::image_read('rep_table_1.png')
 print(img)
 
 ```
 
-Appendix B: Replication of results 
+Appendix B: Table 2 Replication 
 
-Note: This table reports non-robust standard errors.  
 ```{r, warning = FALSE, echo = FALSE, error = FALSE, message = FALSE}
 
 # this is my replication, using regular SE instead of Robust SE because I couldn't get STATA to report the robust SEs. They were the same though. 
 
-img2 <- magick::image_read('stata_rep_main.png')
+img2 <- magick::image_read('rep_table_two.png')
 print(img2)
 
 ```
@@ -219,8 +228,10 @@ print(img2)
 
 ```{r, stata code}
 
-#this is the STATA code for the replication. DO NOT try to run in R. 
+# this is the STATA code for the replication. DO NOT try to run in R. 
+# please see https://github.com/LizMas/terrorism_rivalries_replication for the .do file. 
 
+# -----begin------------- 
 
 #use "fpy replication data jop 2012.dta"
 #set more off
