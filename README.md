@@ -1,1 +1,1 @@
-# terrorism_rivalries_replication
+# 1006_replication

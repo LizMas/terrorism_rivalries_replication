@@ -1,0 +1,293 @@
+---
+title: "Replication of Findley, Piazza, and Young (2012): Revisiting Terrorism in International Rivalries" 
+author: "Liz Masten"
+date: "4/29/2020"
+output: bookdown::pdf_document2
+bibliography: bib2.bib
+biblio-style: apalike 
+link_citations: TRUE
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(foreign)
+library(tinytex)
+library(bookdown)
+library(bibtex)
+library(yaml)
+library(knitcitations)
+library(magick)
+library(memisc)
+library(pscl)
+library(MASS)
+library(amen)
+library(cluster)
+library(lmtest)
+library(plm)
+library(sandwich)
+library(stargazer)
+library(huxtable)
+library(tidyverse)
+
+```
+
+# Abstract 
+
+Findley, Piazza, and Young (2012) show that interstate rivalries are a positive predictor of transnational terrorist activity. The authors argue that terrorism is often a component of broader hostilities that can be emperically analyzed using a series of politicaly relevant directed dyads. I was able to successfully replicate all of their results. In my extension, I run dyadic quasipoisson models using R. These models are equally statistically significant with respect to rivalry, the main concern of the original paper, and thereby confirm that the original findings are robust. However, concerns exist regarding the authors' use of dyadic analysis in general.   
+
+# Introduction 
+
+In their paper "Games Rivals Play: Terrorism in International Rivalries," Findley, Piazza, and Young (henceforth FPY) analyze transnational terrorism as a component of interstate rivalries, specifically focusing on the use of terrorism in proxy warfighting. Their main argument is that terrorist attacks are more likely to occur in the context of a rivalry between two states than in the absence of such a rivalry. They empirically test their hypothesis by analyzing “politically relevant directed state dyads.” They define politically relevant as states where “relationships of interest are at least possible” and utilize directed state dyads to indicate directionality of attacks (i.e. the state where the attack originated) in which there exists at least one major power [@findley2012games].
+
+I was able to successfully replicate FPY's findings in this paper exactly. Note that the authors suffered from a data management error at the time of publication and subsequently published errata results. I based my analysis on the revised data and tables, which can be found in the Appendix. In an effort to not reinvent the wheel, and because there are no directly analogous R packages to translate the authors' original STATA code, I wrote and managed the project in R while running the replication in STATA. My extension is done in R [@R]. 
+
+In my extension, I run four dyadic quasipoisson models using the same (errata) data as the original authors. These models are similarly statistically significant to the original results, and the statistical significance of the rivalry variable is equivalent to the original findings. In fact, my models report a stronger effect of rivalry than the original paper. These results confirm that the authors' original findings are robust.
+
+This paper is laid out as follows: in the section below, I discuss relevant literature as it relates to the concept of interstate rivalries, state-sponsored terrorism, and the use of proxies. I then discuss FPY's research design and analysis and my successful replication of their results. Next, I conduct an extension which validates FPY's findings using dyadic quasipoisson models. Lastly, I discuss my results and the implications for future empirical research in the field of terrorism studies.^[All analysis for this paper is available in my GitHub: https://github.com/LizMas/1006_replication].
+
+# Literature Review
+
+States both use and suffer from terrorism. It is no secret that states support terrorist groups, actively or passively, willingly or unwillingly. States with strong and stable institutions may give groups direct aid including money, weapons, or logistic support. They may help with training and operations, back them diplomatically, assist organizing efforts, steer the group’s ideological direction, or provide sanctuary. States with weak capacity or institutional infighting may offer support in similar ways, but with the caveat that they couldn’t get rid of the group or its influence if they wanted to [@byman2010agents].    
+
+Terrorist groups make appealing proxies because they specialize in activities that states are often unwilling or unable to do directly. They offer cover and plausible deniability in case an operation goes bad or is unpopular, allowing states to avoid directly committing an act of war against another state [@conrad2011interstate]. Terrorist proxies are also disproportionally effective when considering the amount of money, time, and personnel it takes to orchestrate an attack versus the capital, infrastructural, and psychological damage they can inflict. This disproportionality makes proxies especially attractive to weak states who have rivalries with stronger states (For example, Iran uses proxies to counter Saudi, US, and Israeli influence in the Middle East). States may also delegate to terrorist groups to ensure the state’s preferences continue beyond the effective global or regional influence of that state [@byman2010agents].
+
+The often surreptitious nature of terrorist proxies makes analyzing this phenomenon difficult.  The empirical study of terrorism, as a subfield of International Relations, tries to make sense of it in two main ways: using a country-year method of analysis, in which variables are analyzed continuously, and dyadic analysis, in which countries are paired and models are estimated having dyadic measurements as the outcome variable. International Relations scholars have a strong preference for dyadic analysis when possible, but terrorism scholars have been somewhat reticent to employ it. Terrorism scholars have traditionally favored using domestic social and institutional or micro-foundational levels of analysis [@cranmer2016critique]. 
+
+FPY were among the first scholars to use dyadic analysis in the field. For their experiment design, they employ a dyadic design to investigate the causal relationship between interstate rivalry and terrorism. They chose dyadic analysis because they deemed it “crucial for establishing causal chains between indicators and patterns of terrorism because it permits us to examine the interplay of both origin countries for terrorism—the countries from which terrorists hail—and target countries that experience terrorist attacks.” 
+
+They use directed dyads, as opposed to nondirected dyads, because they argue that there may be “that certain aspects of the origin country—the country of national origin of the perpetrators of the attack—lead to greater attacks on the target country—the country where the attack occurred. Directed dyads are also appropriate because certain aspects of the target country may make them a more plausible target for actors from the origin country.” They also used only politically relevant dyads, which allows them to discount pairs of states which would not significantly interact in the international system. This keeps the number of observations from being deceivingly high, which would increase the likelihood of spurious statistical significance. 
+
+# Replication 
+
+I successfully replicated the results from Findley et al. (2012). The code for this replication can be found in my repo, mentioned above. The relevant tables can be found in the Appendix.  
+
+# Extension
+
+FYP ran negative binomial regressions with STATA's cluster function. In R, I chose to use R’s general linear model using a quasipoisson distribution because the dataset contains over-dispersed count data as a result of FPY’s use of dyads. I ran four models, using the same variables that the original authors included in their analysis, and wrapped the models in a clustering function to account for dyadic clustering. The results show that rivalry is highly statistically significant at P < 0.001 across all four models. This matches the FPY’s original findings. The models show a stronger effect of rivalry than the original findings, but all variables in this extension trend slightly higher than the original results. 
+
+```{r}
+
+# data from errata 
+
+#na.omit to get rid of 15,000 observations in joint democracy. This was necessary for the clustering function to run. 
+
+data <- read.dta("stata/updated_data.dta") %>% na.omit()
+
+```
+
+```{r}
+
+#write clustering function for dyadic analysis. Thanks to Alice Xu for help with this: 
+
+cluster_se <- function(model, cluster){
+  if(nrow(model.matrix(model))!=length(cluster)){
+    stop("check your data: cluster variable has different N than model")}
+  M <- length(unique(cluster))
+  N <- length(cluster)          
+  K <- model$rank  
+  dfc <- (M/(M - 1)) * ((N - 1)/(N - K))
+  uj  <- apply(estfun(model), 2, function(x) tapply(x, cluster, sum));
+  rcse.cov <- dfc * sandwich(model, meat = crossprod(uj)/N)
+  return(coeftest(model, vcov. = rcse.cov))
+}
+
+```
+
+```{r}
+
+# NOTE: The authors did a negative binomial regression in STATA using nbreg. The R equivalent is glm.nb from the MASS package. However, glm.nb sets dispersion at 1 by default. Quasipoisson allows for the dispersion to be unrestricted by the model and rather determined from the data itself.   
+
+# Model 1: STATA: 'nbreg terrorCounts rivalry jointDem1 logcapratio contiguity, nolog cluster(dyadid) dispersion(constant)' 
+
+m1 <- glm(data = data, terrorCounts ~ rivalry + jointDem1 + logcapratio + contiguity, family = quasipoisson)
+
+# STATA: 'nbreg terrorCounts2 rivalry jointDem1 logcapratio contiguity, nolog cluster(dyadid)  dispersion(constant)'  
+
+m2 <- glm(data = data, terrorCounts2 ~ rivalry + jointDem1 + logcapratio + contiguity, family = quasipoisson) 
+
+# STATA: 'nbreg terrorCounts rivalry jointDem1 logcapratio historyl1 historyl2 coldwar1 conflict1 conflict2 contiguity war1 war2, nolog cluster(dyadid) dispersion(constant)' 
+
+m3 <- glm(data = data, terrorCounts ~ rivalry + jointDem1 + logcapratio + historyl1 + historyl2 + coldwar1 + conflict1 + conflict2 + contiguity + war1 + war2, family = quasipoisson) 
+
+#STATA: 'nbreg terrorCounts2 rivalry jointDem1 logcapratio historyl1 historyl2 coldwar1 conflict1 conflict2 contiguity war1 war2, nolog cluster(dyadid)  dispersion(constant)' 
+
+m4 <- glm(data = data, terrorCounts2 ~ rivalry + jointDem1 + logcapratio + historyl1 + historyl2 + coldwar1 + conflict1 + conflict2 + contiguity + war1 + war2, family = quasipoisson) 
+
+```
+
+
+```{r}
+
+#run the function on the data.   
+
+mod_cluster_1 <- cluster_se(m1, data$dyadid)
+
+mod_cluster_2 <- cluster_se(m2, data$dyadid)
+
+mod_cluster_3 <- cluster_se(m3, data$dyadid)
+
+mod_cluster_4 <- cluster_se(m4, data$dyadid)
+
+```
+
+```{r ext_table, results = 'asis', warning = FALSE, message = FALSE, echo = FALSE}
+
+# Creating the huxtable object (confidence intervals)
+tab_format <- huxreg("Model 1" = mod_cluster_1,
+                 "Model 2" = mod_cluster_2,
+                 "Model 3" = mod_cluster_3, 
+                 "Model 4" = mod_cluster_4,
+coefs = c('Intercept' = '(Intercept)',
+'Rivalry'='rivalry',
+'Joint Democracy' = 'jointDem1',
+'Logged Capacity Ratio' = 'logcapratio',
+'Contiguity' = 'contiguity',
+'History 1' = 'historyl1',
+'History 2' = 'historyl2',
+'Cold War' = 'coldwar1',
+'Conflict 1' = 'conflict1',
+'Conflict 2' = 'conflict2',
+'War 1' = 'war1',
+'War 2' = 'war2'),
+statistics = c('Total Observations' = 'nobs'),
+number_format = 3)
+
+# Adding a title
+
+tab_final <- tab_format %>%
+set_caption("Quasipoisson Clustered Models of Transnational Terrorist Activity per Findley et al (2012)")
+
+```
+
+```{r}
+
+tab_final
+
+```
+
+
+
+# Critique 
+
+While statistically robust, the results reported by both FPY and this paper may be problematic. This problem lies in the paper’s dyadic design. A key assumption of dyadic design is that the observations have to be independent events. Since states exist in a globalized world, rather than a vacuum, it is inappropriate to assume that dyadic interactions are independent from triadic (or greater) interactions. For example, let’s use Israel and Saudi Arabia as an example of a dyad. In the experimental design, we must assume that this dyadic relationship is independent, or not influenced by tertiary relationships. However, what about Iran, arguably both countries’ main regional rival? How can we be sure that the actions of Israel and Saudi Arabia are being made without consideration of an Iranian response? Additionally, because both countries have different stakes with respect to their Iranian rivalry, how can we control for their different responses? This interdependence is one of the main flaws with dyadic design.
+
+Additionally, dyads double the amount of observations in a dataset, even though the number of independent cases does not change. This can lead to statistical significance by virtue of increased observations. Because of these issues, dyadic analysis risks “dramatically understat[ing] the size of standard errors and overstat[ing] the power of hypothesis tests” [erikson2014dyadic]. We can see this in Table 1 above. Note how many variables are reported to be very statistically significant. 
+
+FPY define their thought process of using directed dyads thusly: “First, we define the origin country as the nationality of the terrorists and the target country as the country (location) in which the terrorist event occurred. Second, we define the origin country as the nationality of the terrorists and the target country as the nationality of the victims. The origin country can be conceived as the exporter of violence while the target is the importer.” I interpret this as a work-around to the problem of not knowing exactly who all is involved in a terrorist attack. It does not solve this fundamental problem and instead risks assigning statistical significance to events that may have been misunderstood and coded incorrectly. 
+
+Conrad (2016) argued this point exactly, saying “even knowing the nationality of the terrorists themselves does not help, since many state-sponsored terrorists are of a different nationality than their state sponsors. For example, knowing that a Lebanese Hizbollah agent pulled off an attack in Israel masks the possibility that the agent may have been sponsored by Iran. In such a case, knowing the nationality of the terrorist (Lebanese) is not useful.” 
+
+Because of the problems with dyadic design, some scholars have called for the practice to be abandoned entirely [@cranmer2016critique] while others advise to proceed with extreme caution [@poast2016dyads]. Abandoning dyadic design in favor of an alternative (perhaps country-year) is beyond the scope of this paper and would have involved recoding most variables entirely. This is an interesting opportunity for future scholarship. 
+
+# Conclusion 
+
+FPY (2012) show that interstate rivalries are a positive predictor of transnational terrorist activity by analyzing politically relevant directed dyads. While I was able to successfully replicate their results and confirm their robustness in my extension, I call into question the experiment's design in general. Dyadic analysis is rapidly falling out of favor in the social sciences due to interdependency of events and the chance of assigning statistical significance to variables that should not be reported as such. 
+
+```{r generated bibliography, echo=FALSE, message=FALSE, warning=FALSE, eval = FALSE}
+
+cleanbib()
+options("citation_format" = "pandoc")
+read.bibtex(file = "bib2.bib")
+
+```
+# Appendix 
+
+Appendix A: Original Table^[All analysis for this paper is available in my GitHub: https://github.com/LizMas/1006_replication/tree/master/stata]. 
+```{r, warning = FALSE, echo = FALSE, error = FALSE, message = FALSE}
+
+# This is the orignal fpy table: 
+
+img <- magick::image_read('og_table_main.png')
+print(img)
+
+```
+
+Appendix B: Replication of results 
+
+Note: This table reports non-robust standard errors.  
+```{r, warning = FALSE, echo = FALSE, error = FALSE, message = FALSE}
+
+# this is my replication, using regular SE instead of Robust SE because I couldn't get STATA to report the robust SEs. They were the same though. 
+
+img2 <- magick::image_read('stata_rep_main.png')
+print(img2)
+
+```
+
+
+```{r, stata code}
+
+#this is the STATA code for the replication. DO NOT try to run in R. 
+
+
+#use "fpy replication data jop 2012.dta"
+#set more off
+
+#/*NOTE: original code from fpy, adjusted for the replication*/ 
+
+#******************
+#* Table 1        *
+#******************
+
+#/* Table 1, Model 1*/
+
+#nbreg terrorCounts rivalry jointDem1 logcapratio contiguity, nolog cluster(dyadid) dispersion(constant) robust
+
+#/*store table, do for each model*/ 
+
+#estimates store m1
+
+#/*Table 1, Model 2 */
+
+#nbreg terrorCounts2 rivalry jointDem1 logcapratio contiguity, nolog cluster(dyadid)  dispersion(constant) robust
+
+#estimates store m2
+
+#/*Table 1, Model 3 */
+#nbreg terrorCounts rivalry jointDem1 logcapratio historyl1 historyl2 coldwar1 conflict1 conflict2 contiguity war1 war2, nolog cluster(dyadid) dispersion(constant) robust
+
+#estimates store m3
+
+#/*Table 1, Model 4 */
+#nbreg terrorCounts2 rivalry jointDem1 logcapratio historyl1 historyl2 coldwar1 conflict1 conflict2 contiguity war1 war2, nolog cluster(dyadid)  dispersion(constant) robust
+
+#estimates store m4
+
+#/*Output table*/ 
+
+#estout m1 m2 m3 m4, cells(b se(par))
+
+#********************
+#* Table 2          *
+#********************
+
+#/* Table 2, Model 5 */
+
+#zinb terrorCounts rivalry jointDem1 logcapratio historyl1 historyl2 coldwar1 conflict1 conflict2 contiguity war1 war2, inflate(rivalry jointDem1 logcapratio historyl1 historyl2 coldwar1 conflict1 conflict2 contiguity war1 war2) cluster(dyadid) nolog robust
+
+#estimates store m5
+
+#/* Table 2, Model 6 */
+#zinb terrorCounts2 rivalry jointDem1 logcapratio historyl1 historyl2 coldwar1 conflict1 conflict2 contiguity war1 war2, inflate(rivalry jointDem1 logcapratio historyl1 historyl2 coldwar1 conflict1 conflict2 contiguity war1 war2) cluster(dyadid) nolog robust
+
+#estimates store m6
+
+#/* Table 2, Model 7 */
+#/* Note: convergence issues require a different maximization technique (bfgs) */
+#zinb terrorCounts rivalry jointDem1 logcapratio historyl1 historyl2 coldwar1 conflict1 conflict2 contiguity war1 war2, inflate(jointDem1) cluster(dyadid)  technique(bfgs) nolog robust
+
+#estimates store m7
+
+#/* Table 2, Model 8 */
+#zinb terrorCounts2 rivalry jointDem1 logcapratio  historyl1 historyl2 coldwar1 conflict1 conflict2 contiguity war1 war2, inflate(jointDem1) cluster(dyadid) nolog robust
+
+#estimates store m8
+
+#/*Output table*/ 
+
+#estout m5 m6 m7 m8, cells(c se(par)) 
+
+```
+# References
