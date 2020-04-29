@@ -1,1 +1,3 @@
-# 1006_replication
+# Replication of Findley, Piazza, and Young (2012): Revisiting Terrorism in International Rivalries
+
+Findley, Piazza, and Young (2012) show that interstate rivalries are a positive predictor of transnational terrorist activity. The authors argue that terrorism is often a component of broader hostilities that can be emperically analyzed using a series of politicaly relevant directed dyads. I was able to successfully replicate all of their results. In my extension, I run dyadic quasipoisson models using R. These models are equally statistically significant with respect to rivalry, the main concern of the original paper, and thereby confirm that the original findings are robust. However, concerns exist regarding the authors' use of dyadic analysis in general.   
