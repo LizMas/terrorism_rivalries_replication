@@ -32,7 +32,6 @@ library(plm)
 library(sandwich)
 library(stargazer)
 library(huxtable)
-library(float)
 library(tidyverse)
 
 ```
