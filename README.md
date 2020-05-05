@@ -2,7 +2,7 @@
 
 #### Description
 
-This is a paper replication I conducted as the final project for GOV 1006 at Harvard Univerisity. 
+This is a paper replication I conducted as the final project for GOV 1006 at Harvard Univerisity. You can see my classmates' work <a href = "https://github.com/GOV-1006-Spring-2020/papers">here</a>.  
 
 #### Abstract
 
