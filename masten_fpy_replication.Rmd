@@ -2,13 +2,16 @@
 title: "Replication of Findley, Piazza, and Young (2012): Revisiting Terrorism in International Rivalries" 
 author: "Liz Masten"
 date: "4/29/2020"
-output: bookdown::pdf_document2
+output: 
+  bookdown::pdf_document2: default
+  toc: false
 bibliography: bib2.bib
 biblio-style: apalike 
 link_citations: TRUE
 header-includes:
   - \usepackage{float}
   - \floatplacement{figure}{H}
+  - \usepackage{setspace}\doublespacing
 ---
 
 
@@ -307,3 +310,4 @@ print(img2)
 
 ```
 # References
+
